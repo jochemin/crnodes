@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 from database import database
 from extdata import getdata
 from tools import procdata
@@ -6,7 +7,6 @@ from network import network
 
 ## Configuramos el formato de log
 logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
-#logging.critical("castaña")
 
 ## Comprobamos que la bbdd existe si no existe la creamos y metemos los primeros nodos
 logging.info('Arranque script CRNODES')
@@ -29,4 +29,6 @@ else:
                 database.insert_new_node(address, address_type, port)
     
 ## tenemos datos en la bbdd, son equipos que aceptan conexiones entrantes. Vamos a escanear los puertos
-                
+## vamos a lanzar 5 procesos simultaneos
+for node in database.          
+p1= multiprocessing.Process
