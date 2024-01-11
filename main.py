@@ -24,7 +24,9 @@ else:
     for address, port in getdata.bitnode_dict().items():
         address_type = procdata.check_ip_address_type(address)
         if address_type == "IPv4":
-            if network.check_port(address, 80):
+            if network.check_port(address, int(port)):
                 logging.info("Detectado nodo con puerto abierto: "+address+":"+port)
                 database.insert_new_node(address, address_type, port)
     
+## tenemos datos en la bbdd, son equipos que aceptan conexiones entrantes. Vamos a escanear los puertos
+                
