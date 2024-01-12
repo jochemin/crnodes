@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+import json
 from database import database
 from extdata import getdata
 from tools import procdata
@@ -28,7 +29,24 @@ else:
                 logging.info("Detectado nodo con puerto abierto: "+address+":"+port)
                 database.insert_new_node(address, address_type, port)
     
-## tenemos datos en la bbdd, son equipos que aceptan conexiones entrantes. Vamos a escanear los puertos
-## vamos a lanzar 5 procesos simultaneos
-for node in database.          
-p1= multiprocessing.Process
+## tenemos datos en la bbdd, son equipos que aceptan conexiones entrantes.
+
+## completamos la versión del cliente Bitcoin 
+'''
+node_list =database.no_user_agent()
+for address, bitcoin_port in node_list:
+    user_agent = network.get_node_version(address, bitcoin_port)
+    if user_agent == 'Error':
+        pass
+    else:
+        logging.info("Detectado "+user_agent+ " en "+ address)
+        database.add_user_agent(address, user_agent)
+'''
+
+## escaneo puertos 
+
+node_list = database.no_scan_date()
+for node in node_list:
+    open_port_list = network.scan_open_ports(node[0])
+    database.add_open_ports(node[0], json.dumps(open_port_list))
+    
