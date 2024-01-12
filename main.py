@@ -32,7 +32,7 @@ else:
 ## tenemos datos en la bbdd, son equipos que aceptan conexiones entrantes.
 
 ## completamos la versión del cliente Bitcoin 
-'''
+
 node_list =database.no_user_agent()
 for address, bitcoin_port in node_list:
     user_agent = network.get_node_version(address, bitcoin_port)
@@ -41,12 +41,15 @@ for address, bitcoin_port in node_list:
     else:
         logging.info("Detectado "+user_agent+ " en "+ address)
         database.add_user_agent(address, user_agent)
-'''
+
 
 ## escaneo puertos 
 
 node_list = database.no_scan_date()
 for node in node_list:
     open_port_list = network.scan_open_ports(node[0])
-    database.add_open_ports(node[0], json.dumps(open_port_list))
+    if len(open_port_list)<50:
+        database.add_open_ports(node[0], json.dumps(open_port_list))
+    else:
+        database.add_open_ports(node[0], "ALL OPEN")
     

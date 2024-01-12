@@ -30,7 +30,6 @@ def scan_open_ports(ip):
     nm = nmap.PortScanner()
     scan_result= nm.scan('{}'.format(ip), arguments='-Pn -sS')
     #scan_result = nm.analyse_nmap_xml_scan()
-    print(scan_result)
     ports =scan_result['scan'][ip]['tcp']
     for key in scan_result['scan'][ip]['tcp']:
         if scan_result['scan'][ip]['tcp'][key]['state'] == 'open':
