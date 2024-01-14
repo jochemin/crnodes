@@ -16,4 +16,3 @@ def bitnode_dict():
         node_port = node.rsplit(':',1)[1]
         nodict[node_address] = node_port
     return nodict
-
