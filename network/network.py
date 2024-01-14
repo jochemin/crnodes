@@ -20,7 +20,6 @@ def get_node_version(ip, port):
     #nm.scan('{}'.format(ip), arguments='-p 8333 --script bitcoin-info --script bitcoin-getaddr')
     #scan = nm.scan(ip, arguments='-p 8333 --script bitcoin-info --script bitcoin-getaddr')
     scan_result = nm.analyse_nmap_xml_scan()
-    print(scan_result)
     try:
         info = scan_result['scan'][ip]['tcp'][int(port)]['script']['bitcoin-info']
         return(info.split('User Agent: ',1)[1])
