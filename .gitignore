@@ -1,2 +1,11 @@
 
 crnodes.log
+<<<<<<< Updated upstream
+=======
+database/crnodes.db
+*.pyc
+*.pyo
+>>>>>>> Stashed changes
+database/crnodes.db
+database/crnodes.db-shm
+database/crnodes.db-wal
