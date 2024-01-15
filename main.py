@@ -7,7 +7,7 @@ from tools import procdata, ssh_bruteforce
 from network import network
 import time
 ## Configuramos el formato de log
-logging.basicConfig(format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
+logging.basicConfig(filename='crnodes.log',format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
 ## Función de primer lanzamiento, crea BBDD y la rellena con los datos de bitnodes
 def first_run():
@@ -36,8 +36,9 @@ def cleaner():
                 logging.critical("Eliminado nodo "+address+" online score 0")
                 database.delete_node(address)
             else:
+                online_score = online_score -1
                 if network.check_port(address, int(bitcoin_port)):
-                    logging.info("| CLEANER | "+address + " continua online ponemos score a 100" )
+                    logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
                     database.update_online_score(address, 100)
                 else:
                     online_score = online_score -1
@@ -140,5 +141,5 @@ if __name__ == '__main__':
     logging.info("Proceso scaner puertos iniciado")
     get_more_nodes_job.start()
     logging.info("Proceso detectar más nodos iniciado")
-    ssh_bruteforce_job.start()
+    #ssh_bruteforce_job.start()
     logging.info("Proceso ataque ssh iniciado")
