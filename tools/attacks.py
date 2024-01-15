@@ -1,4 +1,6 @@
 import http.client
+import bitcoinlib
+
 
 def port_80_information(ip):
     connection = http.client.HTTPConnection(ip, 80, timeout=10)
@@ -7,4 +9,4 @@ def port_80_information(ip):
     headers = response.getheaders()
     print(response.getheaders())
 
-port_80_information('62.159.33.3')
+#port_80_information('62.159.33.3')
