@@ -68,12 +68,16 @@ def port_scan():
         for node in node_list:
             logging.info("| PORT SCAN | Detectando puertos abiertos en "+node[0])
             open_port_list = network.scan_open_ports(node[0])
-            if len(open_port_list)<50:
+            if len(open_port_list)>1 and len(open_port_list)<50:
                 logging.info("| PORT SCAN | Puertos abiertos en "+node[0])
                 database.add_open_ports(node[0], json.dumps(open_port_list))
-            else:
+                logging.info("| PORT SCAN | Puertos"+json.dumps(open_port_list)+ " añadidos a "+node[0])
+            elif len(open_port_list)>50:
                 logging.warn("| PORT SCAN | Detectado posible Honeypot en "+node[0])
                 database.add_open_ports(node[0], "ALL OPEN")
+            else:
+                logging.info("| PORT SCAN | No se han detectado puertos en "+node[0])
+                database.add_open_ports(node[0], "None")
 
 def get_more_nodes():
     while True:

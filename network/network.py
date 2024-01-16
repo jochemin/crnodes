@@ -51,11 +51,14 @@ def get_more_nodes(ip, port):
 def scan_open_ports(ip):
     port_list=[]
     nm = nmap.PortScanner()
-    scan_result= nm.scan('{}'.format(ip), arguments='-Pn -sS')
-    for key in scan_result['scan'][ip]['tcp']:
-        if scan_result['scan'][ip]['tcp'][key]['state'] == 'open':
-            port_list.append(key)
-    return port_list
+    scan_result= nm.scan('{}'.format(ip), arguments='-Pn -p 21,22,80,443,2100,2200,8000,8080,8332,8333,9735')
+    try:
+        for key in scan_result['scan'][ip]['tcp']:
+            if scan_result['scan'][ip]['tcp'][key]['state'] == 'open':
+                port_list.append(key)
+        return port_list
+    except:
+        return port_list
 
 def send_notification(message):
     ## Token 6898511931:AAEtXtLXHxeFAibL_cQDGSaTQJxRmX6_gXs

@@ -86,7 +86,7 @@ def no_user_agent():
 def no_scan_date():
     with database_connect() as conn:
         c = conn.cursor()
-        c.execute("SELECT address FROM nodes WHERE last_scan IS NULL")
+        c.execute("SELECT address FROM nodes WHERE port_scan_date IS NULL")
         rows = c.fetchall()
         return rows
 
