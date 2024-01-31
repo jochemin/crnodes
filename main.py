@@ -6,6 +6,7 @@ from extdata import getdata
 from tools import procdata, ssh_bruteforce
 from network import network
 import time
+import datetime
 ## Configuramos el formato de log
 logging.basicConfig(filename='crnodes.log',format="%(asctime)s | %(levelname)s | %(message)s", level=logging.INFO)
 
@@ -30,36 +31,50 @@ def first_run():
 def cleaner():
     while True:
         node_list = database.all_nodes()
-        for address, bitcoin_port, online_score in node_list:
+        logging.info("| CLEANER | ONLINE SCORE|")
+        for address, bitcoin_port, user_agent, online_score in node_list:
             logging.info("| CLEANER | Comprobando "+address+" online score="+str(online_score) )
-            if online_score == 0:
-                logging.critical("Eliminado nodo "+address+" online score 0")
-                database.delete_node(address)
-            else:
+            database.delete_0_score_nodes()
+            if network.check_port(address, int(bitcoin_port)):
                 online_score = online_score +1
-                if network.check_port(address, int(bitcoin_port)):
-                    logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
-                    database.update_online_score(address, online_score)
-                else:
-                    online_score = online_score -1
-                    logging.info("Nodo apagado o fuera de cobertura pasa un score de "+str(online_score))
-                    database.update_online_score(address, online_score)
-        ## lanzamos el limpiador cada 6 horas
-        time.sleep(21600)
+                logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
+                database.update_online_score(address, online_score)
+            else:
+                online_score = online_score -1
+                logging.info("| CLEANER | Nodo apagado o fuera de cobertura pasa un score de "+str(online_score))
+                database.update_online_score(address, online_score)
+        node_list = database.non_listening_nodes_date()
+        logging.info("| CLEANER | LAST SEEN |")
+        for address, last_seen in node_list:
+            now = datetime.datetime.now()
+            try:
+                last_seen = datetime.datetime.strptime(last_seen, '%d/%m/%Y %H:%M:%S')
+                if((now-last_seen).days) >=5:
+                    database.delete_non_listening_node(address)
+            except Exception:
+                pass
+        logging.info("| CLEANER | NO AGENT |")
+        try:
+            database.delete_no_agent_node()
+        except Exception:
+            pass
+            
+        ## lanzamos el limpiador cada hora
+        time.sleep(3600)
 
 ## completamos la versión del cliente Bitcoin 
 def complete_user_agent():
-    while True:
-        node_list =database.no_user_agent()
-        for address, bitcoin_port in node_list:
-            logging.info("| USER_AGENT | Detectando version nodo Bitcoin en "+address)
-            user_agent = network.get_node_version(address, bitcoin_port)
-            if user_agent == 'Error':
-                logging.warning("| USER_AGENT | No se pudo detectar version nodo Bitcoin en "+address)
-                pass
-            else:
-                logging.info("| USER_AGENT | Detectado "+user_agent+ " en "+ address)
-                database.add_user_agent(address, user_agent)
+    node_list =database.no_user_agent()
+    for address, bitcoin_port in node_list:
+        logging.info("| USER_AGENT | Detectando version nodo Bitcoin en "+address)
+        user_agent = network.get_node_version(address, bitcoin_port)
+        if user_agent == 'Error':
+            logging.warning("| USER_AGENT | No se pudo detectar version nodo Bitcoin en "+address)
+            database.add_user_agent(address, 'IBD')
+            pass
+        else:
+            logging.info("| USER_AGENT | Detectado "+user_agent+ " en "+ address)
+            database.add_user_agent(address, user_agent)
 
 ## escaneo puertos 
 def port_scan():
@@ -73,16 +88,16 @@ def port_scan():
                 database.add_open_ports(node[0], json.dumps(open_port_list))
                 logging.info("| PORT SCAN | Puertos"+json.dumps(open_port_list)+ " añadidos a "+node[0])
             elif len(open_port_list)>50:
-                logging.warn("| PORT SCAN | Detectado posible Honeypot en "+node[0])
                 database.add_open_ports(node[0], "ALL OPEN")
             else:
                 logging.info("| PORT SCAN | No se han detectado puertos en "+node[0])
-                database.add_open_ports(node[0], "None")
+                database.add_open_ports(node[0], None)
+            
 
 def get_more_nodes():
     while True:
         node_list= database.all_nodes()
-        for address, bitcoin_port, online_score in node_list:
+        for address, bitcoin_port, user_agent, online_score in node_list:
             logging.info("| GET NODES | Solicitando nodos a  "+address)
             for address, port in network.get_more_nodes(address, bitcoin_port).items():
                 address_type = procdata.check_ip_address_type(address)
@@ -93,7 +108,8 @@ def get_more_nodes():
                         if database.insert_new_node(address, address_type, port) == "Error":
                             logging.warning("| GET NODES | Detectado nodo duplicado "+ address)
                     else:
-                        logging.info("| GET NODES | Comprobando si el nodo "+ address+ " acepta conexiones")
+                        logging.info("| GET NODES | El nodo "+ address+ " no acepta conexiones")
+                        database.insert_or_replace_non_listening_node(address, port)
 
 def attack_ssh():
     while True:
@@ -103,10 +119,9 @@ def attack_ssh():
             try:
                 result = ssh_bruteforce.is_ssh_open(node[0])
                 if result != False: 
-                    if result != "None":
+                    if result != None:
                         network.send_notification(result)
             except Exception as e:
-                print(e)
                 pass    
 
 if __name__ == '__main__':
@@ -149,5 +164,5 @@ if __name__ == '__main__':
     logging.info("Proceso scaner puertos iniciado")
     get_more_nodes_job.start()
     logging.info("Proceso detectar más nodos iniciado")
-    ssh_bruteforce_job.start()
-    logging.info("Proceso ataque ssh iniciado")
+    #ssh_bruteforce_job.start()
+    #logging.info("Proceso ataque ssh iniciado")

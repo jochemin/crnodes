@@ -1,5 +1,4 @@
 import http.client
-import bitcoinlib
 
 
 def port_80_information(ip):
@@ -9,4 +8,4 @@ def port_80_information(ip):
     headers = response.getheaders()
     print(response.getheaders())
 
-#port_80_information('62.159.33.3')
+port_80_information('109.224.84.149')

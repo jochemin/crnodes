@@ -63,4 +63,5 @@ def get_bitcoin_version(ip, port):
 
     # Close the TCP connection
     s.close()
-get_bitcoin_version('23.114.235.154',8333)
+
+get_bitcoin_version("54.80.54.71",8333)

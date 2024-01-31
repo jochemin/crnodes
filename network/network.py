@@ -5,6 +5,7 @@ import requests
 
 def check_port(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(0.5)
     result = sock.connect_ex((ip, port))
     if result == 0:
         sock.close()
@@ -16,13 +17,17 @@ def check_port(ip, port):
 def get_node_version(ip, port):
 
     nm = nmap.PortScanner()
-    nm.scan('{}'.format(ip), arguments='-p {} --script bitcoin-info'.format(port))
+    nm.scan('{}'.format(ip), arguments='-Pn -p {} --script bitcoin-info'.format(port))
     #nm.scan('{}'.format(ip), arguments='-p 8333 --script bitcoin-info --script bitcoin-getaddr')
     #scan = nm.scan(ip, arguments='-p 8333 --script bitcoin-info --script bitcoin-getaddr')
     scan_result = nm.analyse_nmap_xml_scan()
     try:
         info = scan_result['scan'][ip]['tcp'][int(port)]['script']['bitcoin-info']
-        return(info.split('User Agent: ',1)[1])
+        try:
+            user_agent= info.split('User Agent: ',1)[1]
+            return user_agent
+        except Exception:
+            return "Error"
     except KeyError:
         return "Error"
 
