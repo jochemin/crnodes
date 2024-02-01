@@ -3,8 +3,19 @@ import nmap
 import json
 import requests
 
-def check_port(ip, port):
+def check_port_ipv4(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(0.5)
+    result = sock.connect_ex((ip, port))
+    if result == 0:
+        sock.close()
+        return True
+    else:
+        sock.close()
+        return False
+    
+def check_port_ipv6(ip, port):
+    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     sock.settimeout(0.5)
     result = sock.connect_ex((ip, port))
     if result == 0:
