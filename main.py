@@ -32,17 +32,27 @@ def cleaner():
     while True:
         node_list = database.all_nodes()
         logging.info("| CLEANER | ONLINE SCORE|")
-        for address, bitcoin_port, user_agent, online_score in node_list:
+        database.delete_0_score_nodes()
+        for address, address_type, bitcoin_port, user_agent, online_score in node_list:
             logging.info("| CLEANER | Comprobando "+address+" online score="+str(online_score) )
-            database.delete_0_score_nodes()
-            if network.check_port(address, int(bitcoin_port)):
-                online_score = online_score +1
-                logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
-                database.update_online_score(address, online_score)
-            else:
-                online_score = online_score -1
-                logging.info("| CLEANER | Nodo apagado o fuera de cobertura pasa un score de "+str(online_score))
-                database.update_online_score(address, online_score)
+            if address_type == "IPv4":
+                if network.check_port_ipv4(address, int(bitcoin_port)):
+                    online_score = online_score +1
+                    logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
+                    database.update_online_score(address, online_score)
+                else:
+                    online_score = online_score -1
+                    logging.info("| CLEANER | Nodo apagado o fuera de cobertura pasa un score de "+str(online_score))
+                    database.update_online_score(address, online_score)
+            elif address_type == "IPv4":
+                if network.check_port_ipv6(address, int(bitcoin_port)):
+                    online_score = online_score +1
+                    logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
+                    database.update_online_score(address, online_score)
+                else:
+                    online_score = online_score -1
+                    logging.info("| CLEANER | Nodo apagado o fuera de cobertura pasa un score de "+str(online_score))
+                    database.update_online_score(address, online_score)
         node_list = database.non_listening_nodes_date()
         logging.info("| CLEANER | LAST SEEN |")
         for address, last_seen in node_list:
@@ -64,17 +74,18 @@ def cleaner():
 
 ## completamos la versión del cliente Bitcoin 
 def complete_user_agent():
-    node_list =database.no_user_agent()
-    for address, bitcoin_port in node_list:
-        logging.info("| USER_AGENT | Detectando version nodo Bitcoin en "+address)
-        user_agent = network.get_node_version(address, bitcoin_port)
-        if user_agent == 'Error':
-            logging.warning("| USER_AGENT | No se pudo detectar version nodo Bitcoin en "+address)
-            database.add_user_agent(address, 'IBD')
-            pass
-        else:
-            logging.info("| USER_AGENT | Detectado "+user_agent+ " en "+ address)
-            database.add_user_agent(address, user_agent)
+    while True:
+        node_list =database.no_user_agent()
+        for address, bitcoin_port in node_list:
+            logging.info("| USER_AGENT | Detectando version nodo Bitcoin en "+address)
+            user_agent = network.get_node_version(address, bitcoin_port)
+            if user_agent == 'Error':
+                logging.warning("| USER_AGENT | No se pudo detectar version nodo Bitcoin en "+address)
+                database.add_user_agent(address, 'IBD')
+                pass
+            else:
+                logging.info("| USER_AGENT | Detectado "+user_agent+ " en "+ address)
+                database.add_user_agent(address, user_agent)
 
 ## escaneo puertos 
 def port_scan():
@@ -97,13 +108,22 @@ def port_scan():
 def get_more_nodes():
     while True:
         node_list= database.all_nodes()
-        for address, bitcoin_port, user_agent, online_score in node_list:
+        for address, address_type, bitcoin_port, user_agent, online_score in node_list:
             logging.info("| GET NODES | Solicitando nodos a  "+address)
             for address, port in network.get_more_nodes(address, bitcoin_port).items():
                 address_type = procdata.check_ip_address_type(address)
                 if address_type == "IPv4":
                     logging.info("| GET NODES | Comprobando si el nodo "+ address+ " acepta conexiones")
-                    if network.check_port(address, int(port)):
+                    if network.check_port_ipv4(address, int(port)):
+                        logging.info("| GET NODES | Detectado nodo con puerto abierto: "+address+":"+port)
+                        if database.insert_new_node(address, address_type, port) == "Error":
+                            logging.warning("| GET NODES | Detectado nodo duplicado "+ address)
+                    else:
+                        logging.info("| GET NODES | El nodo "+ address+ " no acepta conexiones")
+                        database.insert_or_replace_non_listening_node(address, port)
+                elif address_type == "IPv6":
+                    logging.info("| GET NODES | Comprobando si el nodo "+ address+ " acepta conexiones")
+                    if network.check_port_ipv6(address, int(port)):
                         logging.info("| GET NODES | Detectado nodo con puerto abierto: "+address+":"+port)
                         if database.insert_new_node(address, address_type, port) == "Error":
                             logging.warning("| GET NODES | Detectado nodo duplicado "+ address)

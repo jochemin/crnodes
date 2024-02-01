@@ -136,7 +136,7 @@ def insert_or_replace_deleted_node(address, listening):
 def all_nodes():
     with database_connect() as conn:
         c = conn.cursor()
-        c.execute("SELECT address, bitcoin_port, user_agent, online_score FROM nodes WHERE last_scan IS NULL")
+        c.execute("SELECT address, address_type, bitcoin_port, user_agent, online_score FROM nodes WHERE last_scan IS NULL")
         rows = c.fetchall()
         return rows
 
