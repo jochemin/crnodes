@@ -143,14 +143,14 @@ def all_nodes():
 def no_user_agent():
     with database_connect() as conn:
         c = conn.cursor()
-        c.execute("SELECT address, bitcoin_port FROM nodes WHERE user_agent IS NULL or user_agent = 'IBD'")
+        c.execute("SELECT address, address_type, bitcoin_port FROM nodes WHERE user_agent IS NULL or user_agent = 'IBD'")
         rows = c.fetchall()
         return rows
 
 def no_scan_date():
     with database_connect() as conn:
         c = conn.cursor()
-        c.execute("SELECT address FROM nodes WHERE port_scan_date IS NULL")
+        c.execute("SELECT address, address_type FROM nodes WHERE port_scan_date IS NULL OR DATE(substr(port_scan_date,7,4)||'-'||substr(port_scan_date,4,2)||'-'||substr(port_scan_date,1,2)) < DATETIME('now', '-5 day')")
         rows = c.fetchall()
         return rows
 

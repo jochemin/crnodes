@@ -1,7 +1,16 @@
 import socket
+import socks
 import nmap
 import json
 import requests
+
+def get_tor_session():
+    session = requests.session()
+    # Tor uses the 9050 port as the default socks port
+    session.proxies = {'http':  'socks5://127.0.0.1:9050',
+                       'https': 'socks5://127.0.0.1:9050'}
+    return session
+
 
 def check_port_ipv4(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -24,22 +33,37 @@ def check_port_ipv6(ip, port):
     else:
         sock.close()
         return False
+    
+def check_port_tor(ip, port):
+    socks.set_default_proxy(socks.SOCKS5, "127.0.0.1",9050)
+    socket.socket = socks.socksocket
+    sock= socket.socket
+    sock.settimeout(0.5)
+    result = sock.connect_ex((ip, port))
+    if result == 0:
+        sock.close()
+        return True
+    else:
+        sock.close()
+        return False
+    
 
-def get_node_version(ip, port):
-
+def get_node_version(address, address_type, port):
     nm = nmap.PortScanner()
-    nm.scan('{}'.format(ip), arguments='-Pn -p {} --script bitcoin-info'.format(port))
-    #nm.scan('{}'.format(ip), arguments='-p 8333 --script bitcoin-info --script bitcoin-getaddr')
-    #scan = nm.scan(ip, arguments='-p 8333 --script bitcoin-info --script bitcoin-getaddr')
-    scan_result = nm.analyse_nmap_xml_scan()
+    if address_type == "IPv4":
+        nm.scan('{}'.format(address), arguments='-Pn -p {} --script bitcoin-info'.format(port))
+        scan_result = nm.analyse_nmap_xml_scan()
+    elif address_type == "IPv6":
+        nm.scan('{}'.format(address), arguments='-6 -Pn -p {} --script bitcoin-info'.format(port))
+        scan_result = nm.analyse_nmap_xml_scan()
     try:
-        info = scan_result['scan'][ip]['tcp'][int(port)]['script']['bitcoin-info']
+        info = scan_result['scan'][address]['tcp'][int(port)]['script']['bitcoin-info']
         try:
             user_agent= info.split('User Agent: ',1)[1]
             return user_agent
-        except Exception:
+        except Exception as e:
             return "Error"
-    except KeyError:
+    except KeyError as e:
         return "Error"
 
 def get_more_nodes(ip, port):
@@ -64,13 +88,16 @@ def get_more_nodes(ip, port):
     except KeyError:
         return nodict
     
-def scan_open_ports(ip):
+def scan_open_ports(address, address_type):
     port_list=[]
     nm = nmap.PortScanner()
-    scan_result= nm.scan('{}'.format(ip), arguments='-Pn -p 21,22,80,443,2100,2200,8000,8080,8332,8333,9735')
+    if address_type == "IPv4":
+        scan_result= nm.scan('{}'.format(address), arguments='-Pn -p 21,22,80,443,2100,2200,8000,8080,8332,8333,9735')
+    elif address_type == "IPv6":
+        scan_result= nm.scan('{}'.format(address), arguments='-6 -Pn -p 21,22,80,443,2100,2200,8000,8080,8332,8333,9735')
     try:
-        for key in scan_result['scan'][ip]['tcp']:
-            if scan_result['scan'][ip]['tcp'][key]['state'] == 'open':
+        for key in scan_result['scan'][address]['tcp']:
+            if scan_result['scan'][address]['tcp'][key]['state'] == 'open':
                 port_list.append(key)
         return port_list
     except:

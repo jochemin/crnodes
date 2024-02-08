@@ -44,7 +44,7 @@ def cleaner():
                     online_score = online_score -1
                     logging.info("| CLEANER | Nodo apagado o fuera de cobertura pasa un score de "+str(online_score))
                     database.update_online_score(address, online_score)
-            elif address_type == "IPv4":
+            elif address_type == "IPv6":
                 if network.check_port_ipv6(address, int(bitcoin_port)):
                     online_score = online_score +1
                     logging.info("| CLEANER | "+address + " continua online ponemos score a "+str(online_score))
@@ -76,9 +76,9 @@ def cleaner():
 def complete_user_agent():
     while True:
         node_list =database.no_user_agent()
-        for address, bitcoin_port in node_list:
+        for address, address_type, bitcoin_port in node_list:
             logging.info("| USER_AGENT | Detectando version nodo Bitcoin en "+address)
-            user_agent = network.get_node_version(address, bitcoin_port)
+            user_agent = network.get_node_version(address, address_type, bitcoin_port)
             if user_agent == 'Error':
                 logging.warning("| USER_AGENT | No se pudo detectar version nodo Bitcoin en "+address)
                 database.add_user_agent(address, 'IBD')
@@ -91,18 +91,18 @@ def complete_user_agent():
 def port_scan():
     while True:
         node_list = database.no_scan_date()
-        for node in node_list:
-            logging.info("| PORT SCAN | Detectando puertos abiertos en "+node[0])
-            open_port_list = network.scan_open_ports(node[0])
+        for address, address_type in node_list:
+            logging.info("| PORT SCAN | Detectando puertos abiertos en "+address)
+            open_port_list = network.scan_open_ports(address, address_type)
             if len(open_port_list)>1 and len(open_port_list)<50:
-                logging.info("| PORT SCAN | Puertos abiertos en "+node[0])
-                database.add_open_ports(node[0], json.dumps(open_port_list))
-                logging.info("| PORT SCAN | Puertos"+json.dumps(open_port_list)+ " añadidos a "+node[0])
+                logging.info("| PORT SCAN | Puertos abiertos en "+address)
+                database.add_open_ports(address, json.dumps(open_port_list))
+                logging.info("| PORT SCAN | Puertos"+json.dumps(open_port_list)+ " añadidos a "+address)
             elif len(open_port_list)>50:
-                database.add_open_ports(node[0], "ALL OPEN")
+                database.add_open_ports(address, "ALL OPEN")
             else:
-                logging.info("| PORT SCAN | No se han detectado puertos en "+node[0])
-                database.add_open_ports(node[0], None)
+                logging.info("| PORT SCAN | No se han detectado puertos en "+address)
+                database.add_open_ports(address, None)
             
 
 def get_more_nodes():
